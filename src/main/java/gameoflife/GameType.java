@@ -4,14 +4,14 @@ import java.util.Random;
 
 public class GameType {
 
-	boolean[] birth = new boolean[8];
-	boolean[] keepAlive = new boolean[8];
+	boolean[] birth = new boolean[9];
+	boolean[] keepAlive = new boolean[9];
 
 	public GameType() {
 		Random r = new Random(System.currentTimeMillis());
 		
-		int birthInt = r.nextInt(255);
-		int aliveInt = r.nextInt(255);
+		int birthInt = r.nextInt(511);
+		int aliveInt = r.nextInt(511);
 		
 		for(int i=0; i< birth.length;i++) {
 			int check = 1 << i;
@@ -47,7 +47,7 @@ public class GameType {
 
 	private void appendNumber(StringBuilder sbbirth, int i) {
 		sbbirth.append(i);
-		if (i != 7) {
+		if (i != birth.length-1) {
 			sbbirth.append(";");
 		}
 	}

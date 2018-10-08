@@ -1,38 +1,40 @@
 package gameoflife;
 
-import java.awt.Dimension;
+import java.awt.Color;
 import java.awt.EventQueue;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.geom.AffineTransform;
-import java.awt.image.AffineTransformOp;
-import java.awt.image.BufferedImage;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.math.BigInteger;
 
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
-public class GameOfLife {
+public class GameOfLife extends JFrame implements KeyListener {
 
 	public static void main(String[] args) {
-		new GameOfLife(1920/8, 1080/8, 300, new GameType());
+		new GameOfLife(1920 / 8, 1080 / 8, 300, new GameType());
 	}
 
 	int ticks;
 	GameType type;
-	
+	Model model;
+	private GamePane gamePane = new GamePane(null);;
+
 	public GameOfLife(int x, int y, int ticks, GameType type) {
-		
+		super("GameOfLife (" + type + ")");
+
 		this.ticks = ticks;
 		this.type = type;
 		System.out.println(type);
-		
-		
+
+		addKeyListener(this);
+
 		EventQueue.invokeLater(new Runnable() {
+
 			@Override
 			public void run() {
 				try {
@@ -42,76 +44,75 @@ public class GameOfLife {
 					ex.printStackTrace();
 				}
 
-				Model model = new Model(x, y);
+				setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+				add(gamePane);
+				setExtendedState(getExtendedState() | JFrame.MAXIMIZED_BOTH);
+				pack();
+				setLocationRelativeTo(null);
+				setVisible(true);
+
+//				model = new Model(getWidth() / 10, getHeight() / 10, type);
 				
-				JFrame frame = new JFrame("GameOfLife (" + type +")");
-				frame.setExtendedState( frame.getExtendedState()|JFrame.MAXIMIZED_BOTH );
-				frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-				frame.add(new TestPane(model));
-				frame.pack();
-				frame.setLocationRelativeTo(null);
-				frame.setVisible(true);
-				
-				
+				model = new Model(4,4,new GameTypeConvey(), BigInteger.valueOf(7l * 16));
+
+				gamePane.setModel(model);
+
 				Timer timer = new Timer(ticks, new ActionListener() {
 					@Override
 					public void actionPerformed(ActionEvent e) {
 						model.step();
-						frame.repaint();
+						repaint();
+						// System.out.println("frame size: " + getSize());
 					}
 				});
-				timer.start();
+				// timer.start();
 			}
 		});
 	}
 
-	public class TestPane extends JPanel{
+	@Override
+	public void keyPressed(KeyEvent arg0) {
+		// TODO Auto-generated method stub
 
-		Model model;
-		
-		public TestPane(Model model) {
-			this.model = model;
+	}
+
+	@Override
+	public void keyReleased(KeyEvent arg0) {
+		// TODO Auto-generated method stub
+
+	}
+
+	@Override
+	public void keyTyped(KeyEvent arg0) {
+
+		if (arg0.getKeyChar() == 's') {
+			model.step();
+			repaint();
 		}
 
-
-		@Override
-		public Dimension getPreferredSize() {
-			return new Dimension(640, 480);
+		if (arg0.getKeyChar() == 'r') {
+			model = new Model(getWidth() / 10, getHeight() / 10);
+			gamePane.setModel(model);
+			setTitle(model.type.toString());
 		}
 
-		@Override
-		protected void paintComponent(Graphics g) {
-			super.paintComponent(g);
-			BufferedImage currentFrame = model.getImage();
-			if (currentFrame != null) {
-				Graphics2D g2d = (Graphics2D) g.create();
-				double horizontalScale = currentFrame.getWidth() / Double.valueOf(getWidth());
-				double verticalScale = currentFrame.getHeight() /  Double.valueOf(getHeight());
+		if (arg0.getKeyChar() == 'c') {
+			model = new Model(getWidth() / 10, getHeight() / 10, new GameTypeConvey());
+			gamePane.setModel(model);
+			setTitle(model.type.toString());
+		}
 
-				double scale = 1.0;
-				if (horizontalScale >= verticalScale) {
-					scale = horizontalScale;
-				} else {
-					scale = verticalScale;
-				}
+		if (arg0.getKeyChar() == 'g') {
+			model.toggleColorMode();
+			if (model.born.equals(Color.WHITE)) {
+				model.setBorn(Color.GREEN);
+				model.setDied(Color.RED);
+			} else {
+				model.setBorn(Color.WHITE);
 
-				g2d.drawImage(scale(currentFrame, 1 / scale), 0, 0, this);
-				g2d.dispose();
 			}
 		}
 
-		public BufferedImage scale(BufferedImage img, double scale) {
-			BufferedImage after = new BufferedImage(new Double(Math.floor(img.getWidth() * scale)).intValue(),
-					new Double(Math.floor(img.getHeight() * scale)).intValue(), img.getType());
-			AffineTransform at = new AffineTransform();
-			at.scale(scale, scale);
-//			AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
-			AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
-			scaleOp.filter(img, after);
-			return after;
-		}
-
-		
 	}
 
 }

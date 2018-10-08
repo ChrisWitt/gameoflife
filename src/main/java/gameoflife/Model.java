@@ -12,13 +12,28 @@ public class Model {
 	private int width;
 	private int height;
 
+	boolean isColorMode = false;
+	Color born = Color.WHITE;
+	Color alive = Color.WHITE;
+	Color died = Color.BLACK;
+
+	GameType type;
+
 	public Model(int width, int height) {
+		this(width, height, new GameType());
+	}
+
+	public Model(int width, int height, GameType type) {
+		this(width, height, type, new BigInteger(width * height, new Random()));
+	}
+
+	Model(int width, int height, GameType type, BigInteger seed) {
 		this.width = width;
 		this.height = height;
+		this.type = type;
+		this.seed = seed;
 
-		state = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_BINARY);
-
-		seed = new BigInteger(width * height, new Random());
+		state = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 
 		System.out.println("seed: " + seed);
 
@@ -26,10 +41,10 @@ public class Model {
 	}
 
 	private void init() {
-		for (int x = 0; x < state.getWidth(); x++) {
-			for (int y = 0; y < state.getHeight(); y++) {
-				if (seed.testBit(x * y + y)) {
-					state.setRGB(x, y, Color.WHITE.getRGB());
+		for (int y = 0; y < state.getHeight(); y++) {
+			for (int x = 0; x < state.getWidth(); x++) {
+				if (seed.testBit(y * state.getWidth() + x)) {
+					state.setRGB(x, y, born.getRGB());
 				}
 			}
 		}
@@ -41,37 +56,35 @@ public class Model {
 
 	public void step() {
 
-		BufferedImage newState = new BufferedImage(width, height, BufferedImage.TYPE_BYTE_BINARY);
+		BufferedImage newState = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
 
 		for (int x = 0; x < state.getWidth(); x++) {
 			for (int y = 0; y < state.getHeight(); y++) {
-				if (positionSurvives(x, y)) {
-					newState.setRGB(x, y, Color.WHITE.getRGB());
-				}
+				updatePosition(newState, x, y);
 			}
 		}
 
 		state = newState;
 	}
 
-	private boolean positionSurvives(int x, int y) {
-
+	private void updatePosition(BufferedImage newState, int x, int y) {
 		Neighbourhood hood = getNeighborhood(x, y);
 
 		int nbrOfNeighbours = hood.nbrOfNeighbours();
 
-		if (hood.isAlive()) {
-			if (nbrOfNeighbours < 2) {
-				return false;
+		if (isAlive(x, y)) {
+			if (type.keepAlive(nbrOfNeighbours)) {
+				newState.setRGB(x, y, alive.getRGB());
+			} else {
+				newState.setRGB(x, y, died.getRGB());
 			}
-			if (nbrOfNeighbours <= 3) {
-				return true;
-			}
-			return false;
+		} else if (type.birth(nbrOfNeighbours)) {
+			newState.setRGB(x, y, born.getRGB());
 		}
+	}
 
-		return (nbrOfNeighbours == 3);
-
+	private boolean isAlive(int x, int y) {
+		return state.getRGB(x, y) == alive.getRGB() || state.getRGB(x, y) == born.getRGB();
 	}
 
 	private Neighbourhood getNeighborhood(int x, int y) {
@@ -109,7 +122,7 @@ public class Model {
 			y = 0;
 		}
 
-		return Color.WHITE.getRGB() == state.getRGB(x, y);
+		return isAlive(x, y);
 	}
 
 	class Neighbourhood {
@@ -132,6 +145,32 @@ public class Model {
 			return count;
 		}
 
+	}
+
+	public void setBorn(Color born) {
+		this.born = born;
+	}
+
+	public void setDied(Color died) {
+		this.died = died;
+	}
+
+	public void setAlive(Color alive) {
+		this.alive = alive;
+	}
+
+	public void toggleColorMode() {
+		isColorMode = !isColorMode;
+		if (isColorMode) {
+			born = Color.GREEN;
+			alive = Color.WHITE;
+			died = Color.RED;
+		} else {
+			born = Color.WHITE;
+			alive = Color.WHITE;
+			died = Color.BLACK;
+
+		}
 	}
 
 }
