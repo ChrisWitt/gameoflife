@@ -19,16 +19,18 @@ import javax.swing.UnsupportedLookAndFeelException;
 public class GameOfLife {
 
 	public static void main(String[] args) {
-		new GameOfLife(320, 240, 300);
+		new GameOfLife(1920/8, 1080/8, 300, new GameType());
 	}
 
 	int ticks;
+	GameType type;
 	
-	public GameOfLife(int x, int y, int ticks) {
+	public GameOfLife(int x, int y, int ticks, GameType type) {
 		
 		this.ticks = ticks;
+		this.type = type;
+		System.out.println(type);
 		
-		Model model = new Model(x, y);
 		
 		EventQueue.invokeLater(new Runnable() {
 			@Override
@@ -40,12 +42,16 @@ public class GameOfLife {
 					ex.printStackTrace();
 				}
 
-				JFrame frame = new JFrame("GameOfLife");
+				Model model = new Model(x, y);
+				
+				JFrame frame = new JFrame("GameOfLife (" + type +")");
+				frame.setExtendedState( frame.getExtendedState()|JFrame.MAXIMIZED_BOTH );
 				frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 				frame.add(new TestPane(model));
 				frame.pack();
 				frame.setLocationRelativeTo(null);
 				frame.setVisible(true);
+				
 				
 				Timer timer = new Timer(ticks, new ActionListener() {
 					@Override
@@ -79,8 +85,8 @@ public class GameOfLife {
 			BufferedImage currentFrame = model.getImage();
 			if (currentFrame != null) {
 				Graphics2D g2d = (Graphics2D) g.create();
-				double horizontalScale = currentFrame.getWidth() / new Double(getWidth());
-				double verticalScale = currentFrame.getHeight() / new Double(getHeight());
+				double horizontalScale = currentFrame.getWidth() / Double.valueOf(getWidth());
+				double verticalScale = currentFrame.getHeight() /  Double.valueOf(getHeight());
 
 				double scale = 1.0;
 				if (horizontalScale >= verticalScale) {
@@ -99,7 +105,8 @@ public class GameOfLife {
 					new Double(Math.floor(img.getHeight() * scale)).intValue(), img.getType());
 			AffineTransform at = new AffineTransform();
 			at.scale(scale, scale);
-			AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
+//			AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_BILINEAR);
+			AffineTransformOp scaleOp = new AffineTransformOp(at, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
 			scaleOp.filter(img, after);
 			return after;
 		}
