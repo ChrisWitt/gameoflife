@@ -2,10 +2,10 @@ package gameoflife;
 
 import org.junit.Test;
 
-class TestGameType {
+public class TestGameType {
 
 	@Test
-	void test() throws InterruptedException {
+	public void test() throws InterruptedException {
 		for (int i = 0; i < 10; i++) {
 			GameType t = new GameType();
 			System.out.println(t);
